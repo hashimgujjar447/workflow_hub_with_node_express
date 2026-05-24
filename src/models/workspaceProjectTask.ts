@@ -1,24 +1,15 @@
-import mongoose, {
-  Schema,
-  Document,
-  Types,
-} from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 import slugify from "slugify";
-
 
 export const TASK_STATUS = [
   "todo",
   "in_progress",
-  "review",
   "completed",
-  "blocked",
+  "failed",
 ] as const;
 
-
-export type TaskStatus =
-  (typeof TASK_STATUS)[number];
-
+export type TaskStatus = (typeof TASK_STATUS)[number];
 
 export interface ITask extends Document {
   title: string;
@@ -36,64 +27,59 @@ export interface ITask extends Document {
   assignedTo?: Types.ObjectId;
 }
 
-
-const taskSchema =
-  new Schema<ITask>(
-    {
-      title: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      slug: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      description: {
-        type: String,
-        default: "",
-      },
-
-      status: {
-        type: String,
-        enum: TASK_STATUS,
-        default: "todo",
-      },
-
-      project: {
-        type: Schema.Types.ObjectId,
-        ref: "Project",
-        required: true,
-      },
-
-      createdBy: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
-
-      assignedTo: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        default: null,
-      },
+const taskSchema = new Schema<ITask>(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
     },
-    {
-      timestamps: true,
-    }
-  );
 
+    slug: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    status: {
+      type: String,
+      enum: TASK_STATUS,
+      default: "todo",
+    },
+
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      required: true,
+    },
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    assignedTo: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 // 🔥 AUTO GENERATE UNIQUE SLUG
 taskSchema.pre("save", async function () {
-
   if (this.isModified("title")) {
-
     const baseSlug = slugify(this.title, {
       lower: true,
       strict: true,
@@ -111,7 +97,6 @@ taskSchema.pre("save", async function () {
         slug,
       })
     ) {
-
       slug = `${baseSlug}-${counter}`;
 
       counter++;
@@ -119,26 +104,12 @@ taskSchema.pre("save", async function () {
 
     this.slug = slug;
   }
-
 });
 
+taskSchema.index({ project: 1, title: 1 }, { unique: true });
 
+taskSchema.index({ project: 1, slug: 1 }, { unique: true });
 
-taskSchema.index(
-  { project: 1, title: 1 },
-  { unique: true }
-);
-
-
-taskSchema.index(
-  { project: 1, slug: 1 },
-  { unique: true }
-);
-
-
-const Task = mongoose.model<ITask>(
-  "Task",
-  taskSchema
-);
+const Task = mongoose.model<ITask>("Task", taskSchema);
 
 export default Task;

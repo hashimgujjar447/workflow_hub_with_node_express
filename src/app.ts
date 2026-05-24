@@ -1,28 +1,57 @@
-import express from "express"
-import cors from "cors"
-import cookieParser from "cookie-parser"
+import express from "express";
 
-const app=express()
+import cors from "cors";
 
+import cookieParser from "cookie-parser";
 
-import authRouter from "./modules/auth/auth.routes"
+// routes
+import authRouter from "./modules/auth/auth.routes";
 
-app.use(cors())
+import workspaceRouter from "./modules/workspace/workspace.routes";
 
-app.use(express.json())
+import projectRouter from "./modules/project/project.routes";
 
-app.use(cookieParser())
+import taskRouter from "./modules/task/task.routes";
 
+const app = express();
 
-app.use("/api/auth",authRouter)
+// middlewares
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  }),
+);
 
+app.use(express.json());
 
-app.get("/",(req,res)=>{
-    res.json({
-          message: "WorkflowHub API Running 🚀",
-    })
-})
+app.use(cookieParser());
 
+// routes
+app.use("/api/auth", authRouter);
 
+app.use("/api/workspaces", workspaceRouter);
 
-export default app
+app.use("/api/projects", projectRouter);
+
+app.use("/api/tasks", taskRouter);
+
+// health check
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+
+    message: "WorkflowHub API Running 🚀",
+  });
+});
+
+// 404 route
+app.use("*", (req, res) => {
+  return res.status(404).json({
+    success: false,
+
+    message: "Route not found",
+  });
+});
+
+export default app;
