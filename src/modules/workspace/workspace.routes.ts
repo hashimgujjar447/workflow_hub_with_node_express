@@ -9,6 +9,7 @@ import {
   addMemberInWorkspace,
   removeWorkspace,
   removeMemberFromWorkspace,
+  createNewWorkspace,
 } from "./workspace.controller";
 
 import protect from "../../middleware/protect.middleware";
@@ -16,6 +17,9 @@ import protect from "../../middleware/protect.middleware";
 const router = Router();
 
 // 🔐 ALL ROUTES PROTECTED
+
+// create workspace
+router.post("/", protect, createNewWorkspace);
 
 // all workspaces
 router.get("/", protect, getAllWorkspaces);

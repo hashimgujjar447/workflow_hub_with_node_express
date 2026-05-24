@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import {
   addMemberToWorkspace,
   createProject,
+  createWorkspace,
   deleteWorkspace,
   getAllMembers,
   getAllProjects,
@@ -10,6 +11,46 @@ import {
   getWorkspaceDetailInfo,
   removeWorkspaceMember,
 } from "./workspace.services";
+
+export const createNewWorkspace = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    const data = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+
+        message: "Please login first",
+      });
+    }
+
+    if (!data.name) {
+      return res.status(400).json({
+        success: false,
+
+        message: "Workspace name is required",
+      });
+    }
+
+    const result = await createWorkspace(userId.toString(), data);
+
+    return res.status(201).json({
+      success: true,
+
+      message: "Workspace created successfully",
+
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+
+      message: error?.message || "Internal server error",
+    });
+  }
+};
 
 export const getAllWorkspaces = async (req: Request, res: Response) => {
   try {

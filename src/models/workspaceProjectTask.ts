@@ -38,7 +38,7 @@ const taskSchema = new Schema<ITask>(
 
     slug: {
       type: String,
-      required: true,
+
       trim: true,
       lowercase: true,
     },

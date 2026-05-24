@@ -4,7 +4,64 @@ import {
   getAllTaskComments,
   getCommentDetail,
   deleteComment,
+  createComment,
 } from "./comment.services";
+
+export const addComment = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    const workspace_slug = req.params.workspace_slug;
+
+    const project_slug = req.params.project_slug;
+
+    const task_slug = req.params.task_slug;
+
+    const data = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+
+        message: "Please login first",
+      });
+    }
+
+    if (!data.description) {
+      return res.status(400).json({
+        success: false,
+
+        message: "Content is required",
+      });
+    }
+
+    const result = await createComment(
+      userId.toString(),
+
+      workspace_slug.toString(),
+
+      project_slug.toString(),
+
+      task_slug.toString(),
+
+      data,
+    );
+
+    return res.status(201).json({
+      success: true,
+
+      message: "Comment created successfully",
+
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+
+      message: error?.message || "Internal server error",
+    });
+  }
+};
 
 export const getAllComments = async (req: Request, res: Response) => {
   try {

@@ -1,61 +1,27 @@
 import User from "../../models/user.model";
 
-import Workspace from "../../models/workspace.model";
-
 import WorkspaceMember from "../../models/workspaceMember.model";
+
+import ProjectMember from "../../models/workspaceprojectMember.model";
 
 import Project from "../../models/workspaceProject.model";
 
-import ProjectMember from "../../models/workspaceprojectMember.model";
+import { checkProjectAccess } from "../../utils/access/project.access";
+
+import { checkProjectLeaderAccess } from "../../utils/access/project.leader.access";
 
 export const getProjectDetails = async (
   userId: string,
   workspace_slug: string,
   project_slug: string,
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
+  const { project } = await checkProjectAccess(
+    userId,
 
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
+    workspace_slug,
 
-  // workspace access
-  const isMemberOfWorkspace = await WorkspaceMember.findOne({
-    workspace: workspace._id,
-
-    user: userId,
-  });
-
-  const isOwner = workspace.owner.toString() === userId;
-
-  if (!isMemberOfWorkspace && !isOwner) {
-    throw new Error("You are not member of the workspace");
-  }
-
-  const project = await Project.findOne({
-    slug: project_slug,
-
-    workspace: workspace._id,
-  }).populate("createdBy", "first_name last_name email");
-
-  if (!project) {
-    throw new Error("No project found");
-  }
-
-  // project access
-  const isMemberOfProject = await ProjectMember.findOne({
-    project: project._id,
-
-    user: userId,
-  });
-
-  const isProjectOwner = project.createdBy._id.toString() === userId;
-
-  if (!isMemberOfProject && !isProjectOwner) {
-    throw new Error("You are not part of project");
-  }
+    project_slug,
+  );
 
   return {
     project,
@@ -67,51 +33,14 @@ export const getAllProjectMembers = async (
   workspace_slug: string,
   project_slug: string,
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
+  const { project } = await checkProjectAccess(
+    userId,
 
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
+    workspace_slug,
 
-  // workspace access
-  const isMemberOfWorkspace = await WorkspaceMember.findOne({
-    workspace: workspace._id,
+    project_slug,
+  );
 
-    user: userId,
-  });
-
-  const isOwner = workspace.owner.toString() === userId;
-
-  if (!isMemberOfWorkspace && !isOwner) {
-    throw new Error("You are not member of the workspace");
-  }
-
-  const project = await Project.findOne({
-    slug: project_slug,
-
-    workspace: workspace._id,
-  }).populate("createdBy", "first_name last_name email");
-
-  if (!project) {
-    throw new Error("No project found");
-  }
-
-  // project access
-  const isMemberOfProject = await ProjectMember.findOne({
-    project: project._id,
-
-    user: userId,
-  });
-
-  const isProjectOwner = project.createdBy._id.toString() === userId;
-
-  if (!isMemberOfProject && !isProjectOwner) {
-    throw new Error("You are not part of project");
-  }
-
-  // fetch members
   const allMembers = await ProjectMember.find({
     project: project._id,
   }).populate("user", "first_name last_name email");
@@ -127,38 +56,15 @@ export const addMember = async (
   project_slug: string,
   user_email: string,
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
+  const { workspace, project, isProjectOwner } = await checkProjectLeaderAccess(
+    userId,
 
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
+    workspace_slug,
 
-  // workspace access
-  const isMemberOfWorkspace = await WorkspaceMember.findOne({
-    workspace: workspace._id,
+    project_slug,
+  );
 
-    user: userId,
-  });
-
-  const isOwner = workspace.owner.toString() === userId;
-
-  if (!isMemberOfWorkspace && !isOwner) {
-    throw new Error("You are not member of the workspace");
-  }
-
-  const project = await Project.findOne({
-    slug: project_slug,
-
-    workspace: workspace._id,
-  });
-
-  if (!project) {
-    throw new Error("Project not found");
-  }
-
-  // user exists?
+  // target user
   const user = await User.findOne({
     email: user_email,
   });
@@ -167,42 +73,28 @@ export const addMember = async (
     throw new Error("No such user found");
   }
 
-  // user must belong to workspace
-  const isUserWorkspaceMember = await WorkspaceMember.findOne({
+  // workspace member check
+  const isWorkspaceMember = await WorkspaceMember.findOne({
     workspace: workspace._id,
 
     user: user._id,
   });
 
-  const isWorkspaceOwner = workspace.owner.toString() === user._id.toString();
+  const isWorkspaceOwner =
+    workspace.owner._id.toString() === user._id.toString();
 
-  if (!isUserWorkspaceMember && !isWorkspaceOwner) {
+  if (!isWorkspaceMember && !isWorkspaceOwner) {
     throw new Error("User is not member of workspace");
   }
 
-  // permission check
-  const isMemberOfProject = await ProjectMember.findOne({
-    project: project._id,
-
-    user: userId,
-
-    role: "leader",
-  });
-
-  const isProjectOwner = project.createdBy.toString() === userId;
-
-  if (!isMemberOfProject && !isProjectOwner) {
-    throw new Error("You are not authorized to add members");
-  }
-
-  // already member?
-  const isUserAlreadyMember = await ProjectMember.findOne({
+  // already project member?
+  const alreadyMember = await ProjectMember.findOne({
     project: project._id,
 
     user: user._id,
   });
 
-  if (isUserAlreadyMember) {
+  if (alreadyMember) {
     throw new Error("User already exists");
   }
 
@@ -228,40 +120,15 @@ export const updateProject = async (
     description?: string;
   },
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
+  const { project } = await checkProjectLeaderAccess(
+    userId,
 
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
+    workspace_slug,
 
-  const project = await Project.findOne({
-    slug: project_slug,
+    project_slug,
+  );
 
-    workspace: workspace._id,
-  });
-
-  if (!project) {
-    throw new Error("Project not found");
-  }
-
-  // permission check
-  const isLeader = await ProjectMember.findOne({
-    project: project._id,
-
-    user: userId,
-
-    role: "leader",
-  });
-
-  const isProjectOwner = project.createdBy.toString() === userId;
-
-  if (!isLeader && !isProjectOwner) {
-    throw new Error("You are not authorized");
-  }
-
-  // update description only
+  // description only
   if (data.description) {
     project.description = data.description;
   }
@@ -278,46 +145,21 @@ export const deleteProject = async (
   workspace_slug: string,
   project_slug: string,
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
+  const { project } = await checkProjectLeaderAccess(
+    userId,
 
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
+    workspace_slug,
 
-  const project = await Project.findOne({
-    slug: project_slug,
+    project_slug,
+  );
 
-    workspace: workspace._id,
-  });
-
-  if (!project) {
-    throw new Error("Project not found");
-  }
-
-  // permission check
-  const isLeader = await ProjectMember.findOne({
-    project: project._id,
-
-    user: userId,
-
-    role: "leader",
-  });
-
-  const isProjectOwner = project.createdBy.toString() === userId;
-
-  if (!isLeader && !isProjectOwner) {
-    throw new Error("You are not authorized");
-  }
-
-  // delete members
+  // delete project members
   await ProjectMember.deleteMany({
     project: project._id,
   });
 
-  // later:
-  // delete tasks/comments
+  // TODO:
+  // delete tasks/comments later
 
   await Project.deleteOne({
     _id: project._id,
@@ -334,41 +176,16 @@ export const removeProjectMember = async (
   project_slug: string,
   memberId: string,
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
+  const { project } = await checkProjectLeaderAccess(
+    userId,
 
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
+    workspace_slug,
 
-  const project = await Project.findOne({
-    slug: project_slug,
-
-    workspace: workspace._id,
-  });
-
-  if (!project) {
-    throw new Error("Project not found");
-  }
-
-  // permission check
-  const isLeader = await ProjectMember.findOne({
-    project: project._id,
-
-    user: userId,
-
-    role: "leader",
-  });
-
-  const isProjectOwner = project.createdBy.toString() === userId;
-
-  if (!isLeader && !isProjectOwner) {
-    throw new Error("You are not authorized");
-  }
+    project_slug,
+  );
 
   // prevent owner removal
-  if (project.createdBy.toString() === memberId) {
+  if (project.createdBy._id.toString() === memberId) {
     throw new Error("Project owner cannot be removed");
   }
 

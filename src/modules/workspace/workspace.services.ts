@@ -5,6 +5,46 @@ import Workspace from "../../models/workspace.model";
 import WorkspaceMember from "../../models/workspaceMember.model";
 import Project from "../../models/workspaceProject.model";
 import { IProject } from "../../models/workspaceProject.model";
+import { checkWorkspaceAccess } from "../../utils/access/workspace.access";
+
+export const createWorkspace = async (
+  userId: string,
+  data: {
+    name: string;
+    description?: string;
+  },
+) => {
+  // check existing workspace
+  const existingWorkspace = await Workspace.findOne({
+    name: data.name,
+  });
+
+  if (existingWorkspace) {
+    throw new Error("Workspace already exists");
+  }
+
+  // create workspace
+  const workspace = await Workspace.create({
+    name: data.name,
+
+    description: data.description,
+
+    owner: userId,
+  });
+
+  // add owner as workspace member
+  await WorkspaceMember.create({
+    workspace: workspace._id,
+
+    user: userId,
+
+    role: "manager",
+  });
+
+  return {
+    workspace,
+  };
+};
 
 export const getAllUserWorkspaces = async (userId: string) => {
   //  owned workspaces
@@ -39,20 +79,10 @@ export const getWorkspaceDetailInfo = async (
   userId: string,
   workspace_slug: string,
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  }).populate("owner", "first_name last_name email");
-
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
-
-  const isMember = await WorkspaceMember.findOne({
-    user: userId,
-    workspace: workspace._id,
-  });
-
-  const isOwner = workspace.owner._id.toString() === userId;
+  const { isMember, isOwner, workspace } = await checkWorkspaceAccess(
+    userId,
+    workspace_slug,
+  );
 
   if (!isMember && !isOwner) {
     throw new Error("You must be member of this workspace to view detail");
@@ -64,24 +94,10 @@ export const getWorkspaceDetailInfo = async (
 };
 
 export const getAllMembers = async (userId: string, workspace_slug: string) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
-
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
-
-  const isMember = await WorkspaceMember.findOne({
-    user: userId,
-    workspace: workspace._id,
-  });
-
-  const isOwner = workspace.owner.toString() === userId;
-
-  if (!isMember && !isOwner) {
-    throw new Error("You are not authorized to view members");
-  }
+  const { isMember, isOwner, workspace } = await checkWorkspaceAccess(
+    userId,
+    workspace_slug,
+  );
 
   const members = await WorkspaceMember.find({
     workspace: workspace._id,
@@ -154,24 +170,12 @@ export const getAllProjects = async (
   userId: string,
   workspace_slug: string,
 ) => {
-  const workspace = await Workspace.findOne({
-    slug: workspace_slug,
-  });
+  const { isMember, isOwner, workspace } = await checkWorkspaceAccess(
+    userId,
+    workspace_slug,
+  );
 
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
-
-  // access check
-  const isUserMember = await WorkspaceMember.findOne({
-    user: userId,
-
-    workspace: workspace._id,
-  });
-
-  const isOwner = workspace.owner.toString() === userId;
-
-  if (!isUserMember && !isOwner) {
+  if (!isMember && !isOwner) {
     throw new Error("You are not authorized to view projects");
   }
 
@@ -276,10 +280,8 @@ export const removeWorkspaceMember = async (
 
   const member = await WorkspaceMember.findOne({
     user: memberId,
-
     workspace: workspace._id,
   });
-
   if (!member) {
     throw new Error("Member not found");
   }

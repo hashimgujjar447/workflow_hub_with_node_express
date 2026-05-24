@@ -1,13 +1,7 @@
-import mongoose, {
-  Schema,
-  Document,
-  Types,
-} from "mongoose";
-import slugify from "slugify"
+import mongoose, { Schema, Document, Types } from "mongoose";
+import slugify from "slugify";
 
-export interface ITaskComment
-  extends Document {
-
+export interface ITaskComment extends Document {
   title: string;
 
   slug: string;
@@ -21,56 +15,52 @@ export interface ITaskComment
   parentComment?: Types.ObjectId | null;
 }
 
-
-const taskCommentSchema =
-  new Schema<ITaskComment>(
-    {
-      title: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      slug: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      description: {
-        type: String,
-        default: "",
-      },
-
-      user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
-
-      task: {
-        type: Schema.Types.ObjectId,
-        ref: "Task",
-        required: true,
-      },
-
-      parentComment: {
-        type: Schema.Types.ObjectId,
-        ref: "TaskComment",
-        default: null,
-      },
+const taskCommentSchema = new Schema<ITaskComment>(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
     },
-    {
-      timestamps: true,
-    }
-  );
+
+    slug: {
+      type: String,
+
+      trim: true,
+      lowercase: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    task: {
+      type: Schema.Types.ObjectId,
+      ref: "Task",
+      required: true,
+    },
+
+    parentComment: {
+      type: Schema.Types.ObjectId,
+      ref: "TaskComment",
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 taskCommentSchema.pre("save", async function () {
-
   if (this.isModified("title")) {
-
     const baseSlug = slugify(this.title, {
       lower: true,
       strict: true,
@@ -88,7 +78,6 @@ taskCommentSchema.pre("save", async function () {
         task: this.task,
       })
     ) {
-
       slug = `${baseSlug}-${counter}`;
 
       counter++;
@@ -96,21 +85,14 @@ taskCommentSchema.pre("save", async function () {
 
     this.slug = slug;
   }
-
 });
 
-
 // unique slug per task
-taskCommentSchema.index(
-  { task: 1, slug: 1 },
-  { unique: true }
+taskCommentSchema.index({ task: 1, slug: 1 }, { unique: true });
+
+const TaskComment = mongoose.model<ITaskComment>(
+  "TaskComment",
+  taskCommentSchema,
 );
-
-
-const TaskComment =
-  mongoose.model<ITaskComment>(
-    "TaskComment",
-    taskCommentSchema
-  );
 
 export default TaskComment;

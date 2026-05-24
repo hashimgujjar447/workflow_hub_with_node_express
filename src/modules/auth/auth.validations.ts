@@ -1,28 +1,16 @@
 import { z } from "zod";
 
+export const registerSchema = z.object({
+  first_name: z.string().min(2),
 
-export const registerSchema =
-  z.object({
+  last_name: z.string().min(2),
 
-    first_name:
-      z.string()
-       .min(2),
+  email: z.email(),
 
-    last_name:
-      z.string()
-       .min(2),
-
-    email:
-      z.email(),
-
-    password:
-      z.string()
-       .min(8),
-
+  password: z.string().min(8),
 });
 
-
-export const loginSchema=z.object({
-    email:z.email(),
-    password:z.string().min(8)
-})
+export const loginSchema = z.object({
+  email: z.email(),
+  password: z.string().min(8),
+});

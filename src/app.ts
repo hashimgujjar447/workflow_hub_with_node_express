@@ -50,7 +50,7 @@ app.get("/", (req, res) => {
 });
 
 // 404 route
-app.use("*", (req, res) => {
+app.use((req, res) => {
   return res.status(404).json({
     success: false,
 

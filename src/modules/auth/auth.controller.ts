@@ -100,6 +100,14 @@ export const getMe = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Already logout",
+      });
+    }
+
     await logoutUser();
 
     res

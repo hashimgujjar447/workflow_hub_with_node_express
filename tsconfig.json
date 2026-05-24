@@ -8,8 +8,9 @@
     "ignoreDeprecations": "6.0",
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
-  "include": ["src"]
-}
 
+  "include": ["src/**/*"]
+}

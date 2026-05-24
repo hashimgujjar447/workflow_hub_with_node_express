@@ -1,11 +1,6 @@
-import mongoose, {
-  Schema,
-  Document,
-  Types,
-} from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 import slugify from "slugify";
-
 
 export interface IProject extends Document {
   name: string;
@@ -17,52 +12,47 @@ export interface IProject extends Document {
   createdBy: Types.ObjectId;
 }
 
-
-const projectSchema =
-  new Schema<IProject>(
-    {
-      name: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      slug: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      description: {
-        type: String,
-        default: "",
-      },
-
-      workspace: {
-        type: Schema.Types.ObjectId,
-        ref: "Workspace",
-        required: true,
-      },
-
-      createdBy: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
+const projectSchema = new Schema<IProject>(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
     },
-    {
-      timestamps: true,
-    }
-  );
 
+    slug: {
+      type: String,
+
+      trim: true,
+      lowercase: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    workspace: {
+      type: Schema.Types.ObjectId,
+      ref: "Workspace",
+      required: true,
+    },
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 // 🔥 AUTO GENERATE UNIQUE SLUG
 projectSchema.pre("save", async function () {
-
   if (this.isModified("name")) {
-
     const baseSlug = slugify(this.name, {
       lower: true,
       strict: true,
@@ -80,7 +70,6 @@ projectSchema.pre("save", async function () {
         slug,
       })
     ) {
-
       slug = `${baseSlug}-${counter}`;
 
       counter++;
@@ -88,27 +77,14 @@ projectSchema.pre("save", async function () {
 
     this.slug = slug;
   }
-
 });
 
-
 // 🔥 UNIQUE PROJECT NAME PER WORKSPACE
-projectSchema.index(
-  { workspace: 1, name: 1 },
-  { unique: true }
-);
-
+projectSchema.index({ workspace: 1, name: 1 }, { unique: true });
 
 // 🔥 UNIQUE SLUG PER WORKSPACE
-projectSchema.index(
-  { workspace: 1, slug: 1 },
-  { unique: true }
-);
+projectSchema.index({ workspace: 1, slug: 1 }, { unique: true });
 
-
-const Project = mongoose.model<IProject>(
-  "Project",
-  projectSchema
-);
+const Project = mongoose.model<IProject>("Project", projectSchema);
 
 export default Project;

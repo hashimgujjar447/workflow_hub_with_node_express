@@ -1,11 +1,6 @@
-import mongoose, {
-  Schema,
-  Document,
-  Types,
-} from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 import slugify from "slugify";
-
 
 export interface IWorkspace extends Document {
   name: string;
@@ -16,51 +11,45 @@ export interface IWorkspace extends Document {
   owner: Types.ObjectId;
 }
 
-
-const workspaceSchema =
-  new Schema<IWorkspace>(
-    {
-      name: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      slug: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
-
-      description: {
-        type: String,
-        default: "",
-      },
-
-      icon: {
-        type: String,
-        default: "",
-      },
-
-      owner: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
+const workspaceSchema = new Schema<IWorkspace>(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
     },
-    {
-      timestamps: true,
-    }
-  );
 
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    icon: {
+      type: String,
+      default: "",
+    },
+
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 // 🔥 AUTO GENERATE UNIQUE SLUG
 workspaceSchema.pre("save", async function () {
-
   if (this.isModified("name")) {
-
     const baseSlug = slugify(this.name, {
       lower: true,
       strict: true,
@@ -78,7 +67,6 @@ workspaceSchema.pre("save", async function () {
         slug,
       })
     ) {
-
       slug = `${baseSlug}-${counter}`;
 
       counter++;
@@ -86,27 +74,12 @@ workspaceSchema.pre("save", async function () {
 
     this.slug = slug;
   }
-
 });
 
+workspaceSchema.index({ owner: 1, name: 1 }, { unique: true });
 
+workspaceSchema.index({ owner: 1, slug: 1 }, { unique: true });
 
-workspaceSchema.index(
-  { owner: 1, name: 1 },
-  { unique: true }
-);
-
-
-
-workspaceSchema.index(
-  { owner: 1, slug: 1 },
-  { unique: true }
-);
-
-
-const Workspace = mongoose.model<IWorkspace>(
-  "Workspace",
-  workspaceSchema
-);
+const Workspace = mongoose.model<IWorkspace>("Workspace", workspaceSchema);
 
 export default Workspace;

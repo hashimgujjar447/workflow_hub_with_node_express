@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-
 import jwt, { Secret } from "jsonwebtoken";
-
 import User from "../models/user.model";
 
 const protect = async (req: Request, res: Response, next: NextFunction) => {
@@ -33,7 +31,16 @@ const protect = async (req: Request, res: Response, next: NextFunction) => {
     req.user = user;
 
     next();
-  } catch (error) {
+  } catch (error: any) {
+    // Token expired
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Token expired",
+      });
+    }
+
+    // Invalid token
     return res.status(401).json({
       success: false,
       message: "Invalid token",

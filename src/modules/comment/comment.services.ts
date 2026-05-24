@@ -4,6 +4,72 @@ import Project from "../../models/workspaceProject.model";
 import ProjectMember from "../../models/workspaceprojectMember.model";
 import Task from "../../models/workspaceProjectTask";
 import TaskComment from "../../models/workspaceProjectTaskComment";
+
+export const createComment = async (
+  userId: string,
+  workspace_slug: string,
+  project_slug: string,
+  task_slug: string,
+  data: {
+    title: string;
+    description?: string;
+    parentComment?: string;
+  },
+) => {
+  const workspace = await Workspace.findOne({
+    slug: workspace_slug,
+  });
+
+  if (!workspace) {
+    throw new Error("No workspace found");
+  }
+
+  const project = await Project.findOne({
+    workspace: workspace._id,
+
+    slug: project_slug,
+  });
+
+  if (!project) {
+    throw new Error("No project found");
+  }
+
+  const task = await Task.findOne({
+    slug: task_slug,
+
+    project: project._id,
+  });
+
+  if (!task) {
+    throw new Error("No task found");
+  }
+
+  // reply validation
+  if (data.parentComment) {
+    const parentComment = await TaskComment.findById(data.parentComment);
+
+    if (!parentComment) {
+      throw new Error("Parent comment not found");
+    }
+  }
+
+  const comment = await TaskComment.create({
+    title: data.title,
+
+    description: data.description || "",
+
+    user: userId,
+
+    task: task._id,
+
+    parentComment: data.parentComment || null,
+  });
+
+  return {
+    comment,
+  };
+};
+
 export const getAllTaskComments = async (
   userId: string,
   workspace_slug: string,

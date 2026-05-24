@@ -6,6 +6,7 @@ import {
   getAllComments,
   removeComment,
   getSingleComment,
+  addComment,
 } from "./comment.controller";
 
 const router = Router();
@@ -17,6 +18,8 @@ router.get(
   getAllComments,
 );
 
+// create comment
+router.post("/:workspace_slug/:project_slug/:task_slug", protect, addComment);
 // single comment detail
 router.get(
   "/:workspace_slug/:project_slug/:task_slug/:comment_slug",
