@@ -1,9 +1,4 @@
-import mongoose, {
-  Schema,
-  Document,
-  Types,
-} from "mongoose";
-
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export const PROJECT_ROLES = [
   "leader",
@@ -14,14 +9,9 @@ export const PROJECT_ROLES = [
   "designer",
 ] as const;
 
+export type ProjectRole = (typeof PROJECT_ROLES)[number];
 
-export type ProjectRole =
-  (typeof PROJECT_ROLES)[number];
-
-
-export interface IProjectMember
-  extends Document {
-
+export interface IProjectMember extends Document {
   user: Types.ObjectId;
 
   project: Types.ObjectId;
@@ -29,46 +19,38 @@ export interface IProjectMember
   role: ProjectRole;
 }
 
-
-const projectMemberSchema =
-  new Schema<IProjectMember>(
-    {
-      user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
-
-      project: {
-        type: Schema.Types.ObjectId,
-        ref: "Project",
-        required: true,
-      },
-
-      role: {
-        type: String,
-        enum: PROJECT_ROLES,
-        required: true,
-        default: "frontend",
-      },
+const projectMemberSchema = new Schema<IProjectMember>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    {
-      timestamps: true,
-    }
-  );
 
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      required: true,
+    },
 
-// one user one project membership
-projectMemberSchema.index(
-  { user: 1, project: 1 },
-  { unique: true }
+    role: {
+      type: String,
+      enum: PROJECT_ROLES,
+      required: true,
+      default: "frontend",
+    },
+  },
+  {
+    timestamps: true,
+  },
 );
 
+// one user one project membership
+projectMemberSchema.index({ user: 1, project: 1 }, { unique: true });
 
-const ProjectMember =
-  mongoose.model<IProjectMember>(
-    "ProjectMember",
-    projectMemberSchema
-  );
+const ProjectMember = mongoose.model<IProjectMember>(
+  "ProjectMember",
+  projectMemberSchema,
+);
 
 export default ProjectMember;
