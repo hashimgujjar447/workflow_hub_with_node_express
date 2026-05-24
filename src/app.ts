@@ -13,6 +13,8 @@ import projectRouter from "./modules/project/project.routes";
 
 import taskRouter from "./modules/task/task.routes";
 
+import commentRouter from "./modules/comment/comment.routes";
+
 const app = express();
 
 // middlewares
@@ -35,6 +37,8 @@ app.use("/api/workspaces", workspaceRouter);
 app.use("/api/projects", projectRouter);
 
 app.use("/api/tasks", taskRouter);
+
+app.use("/api/comments", commentRouter);
 
 // health check
 app.get("/", (req, res) => {
