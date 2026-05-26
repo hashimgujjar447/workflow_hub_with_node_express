@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import protect from "../../middleware/protect.middleware";
+import commentRouter from "../comment/comment.routes";
 
 import {
   getAllTasks,
@@ -9,18 +10,22 @@ import {
   removeTask,
 } from "./task.controller";
 
-const router = Router();
+const router = Router({
+  mergeParams: true,
+});
 
 // all tasks
-router.get("/:workspace_slug/:project_slug", protect, getAllTasks);
+router.get("/", protect, getAllTasks);
 
 // single task detail
-router.get("/:workspace_slug/:project_slug/:task_slug", protect, getTaskDetail);
+router.get("/:task_slug", protect, getTaskDetail);
 
 // update task status
-router.patch("/:workspace_slug/:project_slug/:task_slug", protect, updateTask);
+router.patch("/:task_slug", protect, updateTask);
 
 // delete task
-router.delete("/:workspace_slug/:project_slug/:task_slug", protect, removeTask);
+router.delete("/:task_slug", protect, removeTask);
+
+router.use("/:task_slug/comments", commentRouter);
 
 export default router;

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import projectRouter from "../project/project.routes";
 
 import {
   getAllWorkspaces,
@@ -44,5 +45,8 @@ router.delete("/:slug/members/:memberId", protect, removeMemberFromWorkspace);
 
 // delete workspace
 router.delete("/:slug", protect, removeWorkspace);
+
+// nested project routes
+router.use("/:workspace_slug/projects", projectRouter);
 
 export default router;

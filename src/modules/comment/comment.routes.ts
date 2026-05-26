@@ -9,29 +9,19 @@ import {
   addComment,
 } from "./comment.controller";
 
-const router = Router();
+const router = Router({
+  mergeParams: true,
+});
 
 // all task comments
-router.get(
-  "/:workspace_slug/:project_slug/:task_slug",
-  protect,
-  getAllComments,
-);
+router.get("/", protect, getAllComments);
 
 // create comment
-router.post("/:workspace_slug/:project_slug/:task_slug", protect, addComment);
+router.post("/", protect, addComment);
 // single comment detail
-router.get(
-  "/:workspace_slug/:project_slug/:task_slug/:comment_slug",
-  protect,
-  getSingleComment,
-);
+router.get("/:comment_slug", protect, getSingleComment);
 
 // delete comment
-router.delete(
-  "/:workspace_slug/:project_slug/:task_slug/:comment_slug",
-  protect,
-  removeComment,
-);
+router.delete("/:comment_slug", protect, removeComment);
 
 export default router;

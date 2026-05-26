@@ -1,4 +1,5 @@
 import { Router } from "express";
+import taskRouter from "../task/task.routes";
 
 import protect from "../../middleware/protect.middleware";
 
@@ -11,36 +12,32 @@ import {
   removeProject,
 } from "./project.controller";
 
-const router = Router();
+const router = Router({
+  mergeParams: true,
+});
 
 // project detail
-router.get("/:workspace_slug/:project_slug", protect, getProjectDetail);
+router.get("/:project_slug", protect, getProjectDetail);
 
 // project members
-router.get(
-  "/:workspace_slug/:project_slug/members",
-  protect,
-  getProjectMembers,
-);
+router.get("/:project_slug/members", protect, getProjectMembers);
 
 // add member in project
-router.post(
-  "/:workspace_slug/:project_slug/members",
-  protect,
-  addMemberInProject,
-);
+router.post("/:project_slug/members", protect, addMemberInProject);
 
 // remove member from project
 router.delete(
-  "/:workspace_slug/:project_slug/members/:memberId",
+  "/:project_slug/members/:memberId",
   protect,
   removeMemberFromProject,
 );
 
 // update project
-router.patch("/:workspace_slug/:project_slug", protect, updateProjectInfo);
+router.patch("/:project_slug", protect, updateProjectInfo);
 
 // delete project
-router.delete("/:workspace_slug/:project_slug", protect, removeProject);
+router.delete("/:project_slug", protect, removeProject);
+
+router.use("/:project_slug/tasks", taskRouter);
 
 export default router;

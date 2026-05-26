@@ -34,12 +34,6 @@ app.use("/api/auth", authRouter);
 
 app.use("/api/workspaces", workspaceRouter);
 
-app.use("/api/projects", projectRouter);
-
-app.use("/api/tasks", taskRouter);
-
-app.use("/api/comments", commentRouter);
-
 // health check
 app.get("/", (req, res) => {
   res.json({
